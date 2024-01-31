@@ -10,6 +10,9 @@
     <?php
     $fName = $lName = "";
     $cnp = 0;
+    $jsonContent = file_get_contents('node_modules/cities.json/cities.json');
+    $data = json_decode($jsonContent, true);
+    
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if(empty($_POST["fName"])) {
             echo "First name is required";
@@ -27,7 +30,26 @@
                     $cnp = $_POST["cnp"];
                 }
             }
+    }
+    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['fileToUpload'])) {
+        $allowedTypes = [IMAGETYPE_PNG, IMAGETYPE_JPEG, IMAGETYPE_GIF];
+        $detectedType = exif_imagetype($_FILES['fileToUpload']['tmp_name']);
+        $error = !in_array($detectedType, $allowedTypes);
+    
+        if ($error) {
+            echo "Invalid file type. Only JPEG, PNG, and GIF are allowed.";
+        } else {
+            $target_dir = "uploads/";
+            $target_file = $target_dir . basename($_FILES["fileToUpload"]["name"]);
+
+            if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
+                echo "The file ". htmlspecialchars( basename( $_FILES["fileToUpload"]["name"])). " has been uploaded.";
+            } else {
+                echo "Sorry, there was an error uploading your file.";
+            }
         }
+    }
+        
     ?>
 
     <h1>Welcome To Simple Contact Form</h1>
@@ -50,6 +72,22 @@
                 <input type="number" id="cnp" name="cnp">
             </div>
             <input type="submit">
+        </form>
+        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" class="form-group" method="post" enctype="multipart/form-data">
+            Select image to upload:
+            <input type="file" name="fileToUpload" id="fileToUpload" accept=".jpeg, .jpg, .png, .gif">
+            <input type="submit" value="Upload Image" name="submit">
+        </form>
+        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" class="form-group" method="post">
+            <label for="city">City:</label>
+            <select name="city" id="city">
+            <?php
+            foreach ($data as $city) {
+                echo '<option value="' . htmlspecialchars($city['name']) . '">' . htmlspecialchars($city['name']) . '</option>';
+            }
+            ?>
+            </select>
+            <input type="submit" value="Submit">
         </form>
     </div>
 
